@@ -1,4 +1,5 @@
 require 'json'
+require 'uri'
 
 class DiawiUploader
 
@@ -10,21 +11,31 @@ class DiawiUploader
     @token = token
     @path = path
 
+    result = {}
+    result[:link] = 'NO LINK'
+    result[:message] = 'NO MESSAGE'
+    result[:success] = 0
+
     if @token.length == 0
-      return 'ERROR: Diawi API token not provided'
+      result[:message] = 'ERROR: Diawi API token not provided'
+      return result
     elsif @path.length == 0
-      return 'ERROR: Path to file not provided'
+      result[:message] = 'ERROR: Path to file not provided'
+      return result
     end
 
     upload_response = upload_ipa_from_path(@path)
     if upload_response == nil
-      return 'ERROR ON UPLOAD'
+      result[:message] = 'ERROR ON UPLOAD'
+      return result
     end
 
-    result = 'NO RESULT'
-
     if (job_id = upload_response['job'])
-      result = get_download_link(job_id)
+      link = get_download_link(job_id)
+      if link =~ URI.regexp
+        result[:success] = 1
+        result[:link] = link
+      end
     end
 
     result
