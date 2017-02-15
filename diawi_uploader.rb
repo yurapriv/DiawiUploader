@@ -6,25 +6,29 @@ class DiawiUploader
   def initialize
   end
 
-  def download_link_for_file(path = '', token = '')
+  def download_link_for_file(path = '', token = '', find_by_udid = 0, wall_of_apps = 0, comment = '')
 
     @token = token
-    @path = path
 
     result = {}
     result[:link] = 'NO LINK'
     result[:message] = 'NO MESSAGE'
     result[:success] = 0
+    result[:days_before_expiration] = 6 # default for free accounts
 
     if @token.length == 0
       result[:message] = 'ERROR: Diawi API token not provided'
       return result
-    elsif @path.length == 0
+    elsif path.length == 0
       result[:message] = 'ERROR: Path to file not provided'
       return result
     end
 
-    upload_response = upload_ipa_from_path(@path)
+    upload_response = upload_ipa_with_parameters(:path => path,
+                                                 :find_by_udid => find_by_udid,
+                                                 :wall => wall_of_apps,
+                                                 :comment => comment)
+
     if upload_response == nil
       result[:message] = 'ERROR ON UPLOAD'
       return result
@@ -76,8 +80,8 @@ class DiawiUploader
     download_link
   end
 
-  def upload_ipa_from_path(path)
-    upload_response = `curl https://upload.diawi.com/ -F token='#{@token}' -F file=@#{path} -F find_by_udid=0 -F wall_of_apps=0`
+  def upload_ipa_with_parameters(params)
+    upload_response = `curl https://upload.diawi.com/ -F token='#{@token}' -F file=@#{params[:path]} -F find_by_udid=#{params[:find_by_udid]} -F wall_of_apps=#{params[:wall]} -F comment='#{params[:comment]}'`
     puts "upload_response = #{upload_response}"
     if is_json?(upload_response)
       return JSON.parse(upload_response)
